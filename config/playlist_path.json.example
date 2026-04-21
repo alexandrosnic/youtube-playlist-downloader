@@ -1,0 +1,6 @@
+{
+  "youtube_paths": {
+    "youtube_playlist_m3u8_dir": "/path/to/your/playlists"
+  }
+}
+

@@ -1,0 +1,29 @@
+{
+    "format": "bestaudio/best",
+    "outtmpl": "%(title)s - %(artist_or_uploader_or_channel)s.%(ext)s",
+    "postprocessors": [
+      {
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "320",
+        "nopostoverwrites": true
+      },
+      {
+        "key": "FFmpegMetadata"
+      }
+    ],
+    "cookiefile": "/path/to/your/cookies.txt",
+    "add-metadata": true,
+    "extract-audio": true,
+    "audio-format": "mp3",
+    "audio-quality": 0,
+    "nooverwrites": true,
+    "embed-metadata": true,
+    "ignoreerrors": true,
+    "ciw": true,
+    "no_mtime": true,
+    "quiet": false,
+    "check-formats": true,
+    "extractor-args": "youtube:player_client=default"
+}
+

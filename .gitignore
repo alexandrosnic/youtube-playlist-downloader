@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local secrets and personal paths
+config/client_secret_*.json
+config/google_api_config.json
+config/playlist_path.json
+config/ytdlp_config.json
+config/skipped_playlists.json
+cookies.txt
+cookies_backup.txt
+
+# Runtime data
+data/*.json
+!data/.gitkeep
+
+.venv/
+venv/

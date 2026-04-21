@@ -1,0 +1,7 @@
+{
+  "google_api": {
+    "client_secret_file": "client_secret_YOUR_CLIENT_ID.apps.googleusercontent.com.json",
+    "scopes": ["https://www.googleapis.com/auth/youtube.readonly"]
+  }
+}
+
