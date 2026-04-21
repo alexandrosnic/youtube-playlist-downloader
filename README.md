@@ -56,6 +56,20 @@ The `data/` folder only stores runtime cache/output JSON files. Those files are 
 
 This folder is self-contained and can be published as its own repository.
 
+## Related repositories
+- Rekordbox sync: `git@github.com:alexandrosnic/rekordbox-playlist-sync.git`
+- Orchestration suite: `git@github.com:alexandrosnic/playlist-sync-suite.git`
+
+If you want to run all projects together from a clean workspace:
+
+```pwsh
+mkdir playlist-sync-workspace
+cd playlist-sync-workspace
+git clone git@github.com:alexandrosnic/youtube-playlist-downloader.git youtube
+git clone git@github.com:alexandrosnic/rekordbox-playlist-sync.git rekordbox
+git clone git@github.com:alexandrosnic/playlist-sync-suite.git playlist_sync_suite
+```
+
 ## Public safety checklist
 - Never commit `config/client_secret_*.json`, local `config/*.json` runtime config, or `cookies*.txt`.
 - Ensure only `config/*.example` template files are committed.
