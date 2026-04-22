@@ -13,6 +13,7 @@
       }
     ],
     "cookiefile": "/path/to/your/cookies.txt",
+    "download_archive": "data/download_archive.txt",
     "add-metadata": true,
     "extract-audio": true,
     "audio-format": "mp3",

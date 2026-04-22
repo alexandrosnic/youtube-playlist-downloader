@@ -96,9 +96,9 @@ def extract_video_info(song_title, video_artist):
     song_title, video_artist = filter_name(song_title, video_artist)
     if hyphen_not_in_parenthesis(song_title):
         full_video_title = song_title
-        video_artist = song_title.split(' -')[0].strip()
-        # print(song_title)
-        song_title = song_title.split(' -')[1].strip()
+        parts = song_title.split(' -', 1)
+        video_artist = parts[0].strip()
+        song_title = parts[1].strip() if len(parts) > 1 and parts[1].strip() else song_title
     else:
         full_video_title = video_artist + " - " + song_title
 
@@ -296,12 +296,12 @@ def download_song(video_url, full_song_title, song_title, artist, file_path, you
     
     # file_path = os.path.join(artist, song_title)
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(video_url, download=False)
         # Guard against looping when artist resolves to "Various Artists"
         if artist == "Various Artists":
             if recursion_depth >= 1:
                 print("Artist still 'Various Artists' after lookup; proceeding without further recursion.")
             else:
+                info = ydl.extract_info(video_url, download=False)
                 detected_artist = (
                     info.get('artist')
                     or info.get('uploader')
@@ -329,6 +329,13 @@ def download_song(video_url, full_song_title, song_title, artist, file_path, you
             try:
                 print("Download")
                 ydl.download([video_url])
+
+                # download_archive may skip an already-known video ID.
+                # In that case, there may be no newly written file at file_path.
+                if not os.path.exists(f"{file_path}.mp3"):
+                    print(f"{full_song_title} skipped by yt-dlp archive (or file already exists with a different name).")
+                    return
+
                 print("Load")
                 # Load the audio file
                 audio = mutagen.File(f"{file_path}.mp3", easy=True)
