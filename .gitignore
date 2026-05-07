@@ -15,6 +15,7 @@ cookies_backup.txt
 
 # Runtime data
 data/*.json
+data/*.txt
 !data/.gitkeep
 
 .venv/
