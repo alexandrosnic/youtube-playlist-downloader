@@ -79,11 +79,14 @@ def get_playlists_from_youtube(youtube_service, use_cache=False):
 
 def fetch_playlists(playlists, youtube_service, only_playlist: str | None = None):
     playlist_data = {"playlists": {}}  # Dictionary to store playlist data
+    playlist_title_to_id = {}  # Mapping from title to id
     playlist_m3u8_folder = get_playlist_m3u8_output_dir()
     os.makedirs(playlist_m3u8_folder, exist_ok=True)
     
     for playlist in playlists:
+        playlist_id = playlist["id"]
         playlist_title = playlist["snippet"]["title"]
+        playlist_title_to_id[playlist_title] = playlist_id
 
         if only_playlist and playlist_title != only_playlist:
             continue
@@ -100,7 +103,7 @@ def fetch_playlists(playlists, youtube_service, only_playlist: str | None = None
         # for each playlist
         songs_per_playlist = get_songs(playlist, youtube_service, playlist_data)
 
-        playlist_data["playlists"][playlist_title] = songs_per_playlist
+        playlist_data["playlists"][playlist_id] = songs_per_playlist
 
         # playlist_json_file = f"{playlist_title}/{playlist_title}.json"
         # os.makedirs(os.path.dirname(playlist_json_file), exist_ok=True)
@@ -109,6 +112,7 @@ def fetch_playlists(playlists, youtube_service, only_playlist: str | None = None
     # playlists_data_path = os.path.join(project_root, 'data', 'playlist_data_test.json')
     # save in playlist_data_test.json all the Youtube playlists and their data (songs etc)
     write_to_json("data", "playlist_data_test.json", playlist_data)
+    write_to_json("data", "playlist_title_to_id.json", playlist_title_to_id)
     return playlist_data
 
 

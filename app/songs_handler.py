@@ -195,31 +195,48 @@ def download_songs(playlists_with_songs_data, youtube_service, only_playlist: st
     playlist_names = list_files_in_directory(playlist_m3u8_path)
     if only_playlist:
         playlist_names = [name for name in playlist_names if name.split('.')[0] == only_playlist]
-    
-    for playlist_m3u8 in playlist_names:
-        playlist_m3u8_name = playlist_m3u8.split('.')[0] # without the extension
-        playlist_path = os.path.join(playlist_m3u8_path, playlist_m3u8)
-        
-        # Use pre-built index instead of re-reading file
-        existing_songs = m3u8_index.get(playlist_m3u8_name, set())
 
-        with open(playlist_path, 'a', encoding="utf-8") as m3u8_file:
-            for playlist_in_json in playlists_with_songs_data:
-                if playlist_in_json == playlist_m3u8_name:
-                    # Uncomment this line if you want to check only one playlist
-                # if playlist_in_json == playlist_m3u8_name == "Love in full tempo":
-                    for song in playlists_with_songs_data[playlist_in_json]:
-                        full_song_title = song['full_video_title']
-                        # Check if the song is already in the m3u8 file
-                        if full_song_title in existing_songs:
-                            print(f'{full_song_title} already exists in {playlist_m3u8}. Skipping!')
-                            continue
-                        extract_song_info_and_download(
-                            song, youtube_service, m3u8_file, 
-                            downloaded_index=downloaded_index,
-                            dry_run=dry_run
-                        )
-                        existing_songs.add(full_song_title)
+    # Load the correct mapping from playlist title to id
+    title_to_id = read_json_if_exists("data", "playlist_title_to_id.json") or {}
+
+    for playlist_m3u8 in playlist_names:
+        playlist_m3u8_name = playlist_m3u8.split('.')[0] # this is the playlist title
+        playlist_path = os.path.join(playlist_m3u8_path, playlist_m3u8)
+
+        # Find the playlist_id for this title
+        playlist_id = title_to_id.get(playlist_m3u8_name)
+        if not playlist_id:
+            print(f"No playlist_id found for m3u8 file {playlist_m3u8_name}, skipping.")
+            continue
+
+        # Collect unique songs for this playlist
+        unique_titles = set()
+        entries = []
+        for song in playlists_with_songs_data.get(playlist_id, []):
+            full_song_title = song['full_video_title']
+            if full_song_title in unique_titles:
+                continue
+            main_artist = extract_main_artist(song['artists'])
+            artist_folder = get_artist_folder(main_artist, True)
+            local_file_path = os.path.join(artist_folder, full_song_title + ".mp3")
+            if os.path.exists(local_file_path):
+                rel_path = os.path.relpath(local_file_path, os.path.dirname(playlist_path))
+                entries.append(f"#EXTINF:-1,{full_song_title}\n{rel_path}\n")
+            else:
+                entries.append(f"#EXTINF:-1,{full_song_title}\n{song['video_url']}\n")
+            unique_titles.add(full_song_title)
+            # Optionally, still call download logic if needed
+            extract_song_info_and_download(
+                song, youtube_service, None, 
+                downloaded_index=downloaded_index,
+                dry_run=dry_run
+            )
+
+        # Overwrite the m3u8 file with unique entries
+        with open(playlist_path, 'w', encoding="utf-8") as m3u8_file:
+            m3u8_file.write("#EXTM3U\n")
+            for entry in entries:
+                m3u8_file.write(entry)
     print("Successfully downloaded all songs")
 
 
@@ -243,7 +260,6 @@ def extract_song_info_and_download(song, youtube_service, m3u8_file, downloaded_
         # Fast exact match check first
         if f"{full_song_title_lower}.mp3" in existing_files_lower:
             print(f'{full_song_title} already downloaded. Skipping!')
-            m3u8_file.write(f"#EXTINF:-1,{full_song_title}\n../Artists/{main_artist}/{full_song_title}.mp3\n")
             return
         
         # Then fuzzy match for similar names (only if needed)
@@ -254,7 +270,6 @@ def extract_song_info_and_download(song, youtube_service, m3u8_file, downloaded_
         )
         if similar_songs_lower:
             print(f'{full_song_title} already downloaded (similar: {similar_songs_lower[0]}). Skipping!')
-            m3u8_file.write(f"#EXTINF:-1,{full_song_title}\n../Artists/{main_artist}/{full_song_title}.mp3\n")
             return
     else:
         # Fallback: scan folder if index not available (shouldn't happen normally)
@@ -264,7 +279,6 @@ def extract_song_info_and_download(song, youtube_service, m3u8_file, downloaded_
             similar_songs_lower = difflib.get_close_matches(full_song_title.lower(), existing_songs_lower, cutoff=0.8)
             if similar_songs_lower:
                 print(f'{full_song_title} already downloaded. Skipping!')
-                m3u8_file.write(f"#EXTINF:-1,{full_song_title}\n../Artists/{main_artist}/{full_song_title}.mp3\n")
                 return
 
     if dry_run:
@@ -285,8 +299,6 @@ def extract_song_info_and_download(song, youtube_service, m3u8_file, downloaded_
     # Update the index when we download a new file
     if downloaded_index is not None and artist_folder in downloaded_index:
         downloaded_index[artist_folder].add(f"{full_song_title.lower()}.mp3")
-    
-    m3u8_file.write(f"#EXTINF:-1,{full_song_title}\n../Artists/{main_artist}/{full_song_title}.mp3\n")
 
 
 
